@@ -12,12 +12,18 @@ from secrets_manager import SecretsManager
 
 secret_manager_client = SecretsManager()
 
-# atlassian_url = secret_manager_client.get_secret('autodoc/atlassian/url')
-apiusername = secret_manager_client.get_secret('/sqa/security/mulesoft_env/apitesting_username')
-apipassword = secret_manager_client.get_secret('/sqa/security/mulesoft_env/apitesting_password')
 
-apiclientid = secret_manager_client.get_secret('/sqa/security/mulesoft_env/apitesting_client_id	')
-apiclientsecret = secret_manager_client.get_secret('/sqa/security/mulesoft_env/apitesting_client_secret')
+api_username = secret_manager_client.get_secret('/sqa/security/mulesoft_env/apitesting_username')
+api_password = secret_manager_client.get_secret('/sqa/security/mulesoft_env/apitesting_password')
+
+api_clientid = secret_manager_client.get_secret('/sqa/security/mulesoft_env/apitesting_client_id')
+api_clientsecret = secret_manager_client.get_secret('/sqa/security/mulesoft_env/apitesting_client_secret')
+
+# print("apiclientid")
+# print(api_clientid)
+# print("apiclientsecret")
+# print(api_clientsecret)
+
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
@@ -85,7 +91,7 @@ def read_test_data(file_path, sheet_name):
                 "result": result
                 
             })
-        print(test_data)
+        # print(test_data)
     return test_data
 
 
@@ -98,23 +104,23 @@ def perform_get_request(url, headers):
 
 def perform_post_request(url, headers, request_data, request_data_type,auth_data):
     if request_data_type == "JSON":
-        print(json.dumps(request_data))
-        print(headers)
+        # print(json.dumps(request_data))
+        # print(headers)
         # logger.debug(f"Request Headers: {headers}")
         # logger.debug(f"Request Payload: {json.dumps(request_data)}")
         response = requests.post(url, json=request_data, auth=(auth_data["client_id"], auth_data["client_secret"]), headers=headers)
         # response = requests.post(url, json=request_data, headers=headers)
     elif request_data_type == "Form Data":
         data = parse_qs(request_data)
-        print(headers)
-        print(data)
+        # print(headers)
+        # print(data)
         # logger.debug(f"Request Headers: {headers}")
         # logger.debug(f"Request Payload: {data}")
         response = requests.post(url, data=data, headers=headers)
     elif request_data_type == "XML":
         headers['Content-Type'] = 'application/xml'
-        print(headers)
-        print(request_data)
+        # print(headers)
+        # print(request_data)
         # logger.debug(f"Request Headers: {headers}")
         # logger.debug(f"Request Payload: {request_data}")
      
@@ -164,11 +170,11 @@ def validate_response(response, expected_status_code, expected_response, exclude
         expected_data = expected_response.get("data", {})
         actual_data = actual_response.get("data", {})
 
-        print("expected_data") 
-        print(expected_data) 
+        # print("expected_data") 
+        # print(expected_data) 
 
-        print("actual_data")
-        print(actual_data)
+        # print("actual_data")
+        # print(actual_data)
 
 
         response_match = expected_data == actual_data
@@ -185,8 +191,13 @@ def validate_response(response, expected_status_code, expected_response, exclude
 
 def get_authorization_headers(auth_type, auth_data):
     headers = {"Content-Type": "application/json"}
-
-    if auth_type == "Bearer":
+    if auth_type == "None":
+        headers.update({
+            "client_id": auth_data.get("client_id", ""),
+            "client_secret": auth_data.get("client_secret", "")
+        })
+        
+    elif auth_type == "Bearer":
         headers["Authorization"] = f"Bearer {auth_data['token']}"
     elif auth_type == "Custom1":
           if "username" in auth_data and "password" in auth_data:
@@ -199,8 +210,8 @@ def get_authorization_headers(auth_type, auth_data):
 # Update the headers with the correct 'Authorization', 'client_id', and 'client_secret'
            headers.update({
                 "Authorization": f"Basic {credentials}",
-                "client_id":apiclientid,
-                "client_secret":apiclientsecret
+                "client_id":api_clientid,
+                "client_secret":api_clientsecret
                 # "client_id": auth_data.get("client_id", ""),
                 # "client_secret": auth_data.get("client_secret", "")
 })
@@ -221,12 +232,12 @@ def get_authorization_headers(auth_type, auth_data):
             # auth = HTTPBasicAuth(auth_data["client_id"], auth_data["client_secret"])
             # auth_header = {"Content-Type": "application/json", "Authorization": auth}
             # auth_header = HTTPBasicAuth(auth_data["client_id"],auth_data["client_secret"])
-            # client_id=apiclientid
-            # client_secret=apiclientsecret
+            # client_id=api_clientid
+            # client_secret=api_clientsecret
             
-            auth_header = HTTPBasicAuth(auth_data[apiclientid],auth_data[apiclientsecret])
+            auth_header = HTTPBasicAuth(auth_data[api_clientid],auth_data[api_clientsecret])
             
-            print(auth_header)
+            # print(auth_header)
         elif "username" in auth_data or "password" in auth_data:
             raise ValueError("Incomplete credentials for Basic authentication. Both username and password are required.")
         else:
@@ -234,9 +245,11 @@ def get_authorization_headers(auth_type, auth_data):
 
         headers["Authorization"] = f"Basic {auth_header.username}:{auth_header.password}"
     elif auth_type == "Custom":
-        headers.update({
-              "client_id":apiclientid,
-              "client_secret":apiclientsecret
+            # print(api_clientid)
+            # print(api_clientsecret)
+            headers.update({
+              "client_id":api_clientid,
+              "client_secret":api_clientsecret
 
             # "client_id": auth_data.get("client_id", ""),
             # "client_secret": auth_data.get("client_secret", "")
@@ -252,8 +265,8 @@ def get_authorization_headers(auth_type, auth_data):
             
             headers.update({
 
-             "client_id":apiclientid ,
-             "client_secret": apiclientsecret
+             "client_id":api_clientid ,
+             "client_secret": api_clientsecret
         
             #  "client_id": auth_data.get("client_id", ""),
             # "client_secret": auth_data.get("client_secret", "")
@@ -262,10 +275,10 @@ def get_authorization_headers(auth_type, auth_data):
      
         headers.update({
 
-              "client_id":apiclientid ,
-              "client_secret": apiclientsecret,
-               "username":apiusername,
-               "password":apipassword
+              "client_id":api_clientid ,
+              "client_secret": api_clientsecret,
+               "username":api_username,
+               "password":api_password
 
         #     "client_id": auth_data.get("client_id", ""),
         #     "client_secret": auth_data.get("client_secret", ""),
@@ -277,7 +290,7 @@ def get_authorization_headers(auth_type, auth_data):
 
     return headers
 
-Excel_Requestfile = os.path.join(os.path.dirname(__file__), '.', 'test_data', 'API_Test_Data.xlsx')
+Excel_Requestfile = os.path.join(os.path.dirname(__file__),'Test_data', 'API_Test_Data.xlsx')
 
 @pytest.mark.parametrize("test_data", read_test_data(Excel_Requestfile, "Input_Result"))
 def test_api_requests(test_data, write_to_excel=True):
@@ -295,11 +308,11 @@ def test_api_requests(test_data, write_to_excel=True):
 
     headers = get_authorization_headers(test_data["auth_type"], test_data.get("authorization_header", {}))
 
-    print(f"Running test case: {test_data['test_case']}")
-    print(f"URL: {url}")
-    print(f"HTTP Method: {http_method}")
-    print(f"Headers: {headers}")
-    print(f"Request Data: {request_data}")
+    # print(f"Running test case: {test_data['test_case']}")
+    # print(f"URL: {url}")
+    # print(f"HTTP Method: {http_method}")
+    # print(f"Headers: {headers}")
+    # print(f"Request Data: {request_data}")
 
     if http_method == "GET":
         response = perform_get_request(url, headers)
@@ -320,8 +333,9 @@ def test_api_requests(test_data, write_to_excel=True):
 
 
     # test_result = validate_response(response, test_data["expected_status_code"], test_data["expected_response"])
+    print(f"Test result: {response.status_code} {response.text}")
 
-    print(f"Test result: {test_result}")
+    # print(f"Test result: {test_result}")
 
     # Update the test result and actual response in the test_data dictionary
     test_data["result"] = "Pass" if test_result else "Fail"
@@ -336,7 +350,7 @@ def test_api_requests(test_data, write_to_excel=True):
 
 
 if __name__ == "__main__":
-    Excel_Requestfile = os.path.join(os.path.dirname(__file__), '.', 'test_data', 'API_Test_Data.xlsx')
+    Excel_Requestfile = os.path.join(os.path.dirname(__file__),'Test_data','API_Test_Data.xlsx')
     
     test_data_list = read_test_data(Excel_Requestfile, "Input_Result")
 
